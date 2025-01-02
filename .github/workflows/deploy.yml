@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-backend:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -32,10 +32,10 @@ jobs:
 
       - name: Build Backend Docker Image
         run: |
-          docker build -t myregistry/backend:latest ./backend
+          docker build -t my-web-app-backend ./backend
 
   build-frontend:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -57,23 +57,32 @@ jobs:
 
       - name: Build Frontend Docker Image
         run: |
-          docker build -t myregistry/frontend:latest ./frontend
+          docker build -t my-web-app-frontend ./frontend
 
   push-docker-images:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
     steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Push Backend Image
-        run: docker push myregistry/backend:latest
+      - name: Authenticate Docker with ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Push Frontend Image
-        run: docker push myregistry/frontend:latest
+      - name: Tag and Push Backend Image
+        run: |
+          docker tag my-web-app-backend:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+
+      - name: Tag and Push Frontend Image
+        run: |
+          docker tag my-web-app-frontend:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
+          docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
 
   deploy:
     needs: push-docker-images
@@ -82,7 +91,7 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          docker pull myregistry/backend:latest
-          docker pull myregistry/frontend:latest
+          docker pull <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          docker pull <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
           docker-compose -f /path/to/docker-compose.yml up -d
           EOF
