@@ -72,17 +72,17 @@ jobs:
 
       - name: Authenticate Docker with ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Tag and Push Backend Image
         run: |
-          docker tag my-web-app-backend:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
-          docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          docker tag my-web-app-backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
 
       - name: Tag and Push Frontend Image
         run: |
-          docker tag my-web-app-frontend:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
-          docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
+          docker tag my-web-app-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
 
   deploy-to-ecs:
     needs: push-docker-images
@@ -98,9 +98,9 @@ jobs:
       - name: Deploy Backend to ECS
         run: |
           ecs-cli configure --region us-east-1 --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --cluster WebCluster
-          ecs-cli compose --file docker-compose.yml --project-name my-web-app up
+          ecs-cli compose --file backend/docker-compose.yml --project-name my-web-app up
 
       - name: Deploy Frontend to ECS
         run: |
           ecs-cli configure --region us-east-1 --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --cluster WebCluster
-          ecs-cli compose --file docker-compose.yml --project-name my-web-app up
+          ecs-cli compose --file frontend/docker-compose.yml --project-name my-web-app up
