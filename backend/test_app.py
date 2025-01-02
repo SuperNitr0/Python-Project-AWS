@@ -9,4 +9,4 @@ def client():
 def test_home(client):
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Hello, World!" in response.data
+    assert b'"message":"Hello from the Python Backend!"' in response.data
