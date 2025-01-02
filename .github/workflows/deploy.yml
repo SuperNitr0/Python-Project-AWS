@@ -84,14 +84,23 @@ jobs:
           docker tag my-web-app-frontend:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
           docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
 
-  deploy:
+  deploy-to-ecs:
     needs: push-docker-images
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Server
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy Backend to ECS
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          docker pull <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
-          docker pull <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
-          docker-compose -f /path/to/docker-compose.yml up -d
-          EOF
+          ecs-cli configure --region us-east-1 --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --cluster WebCluster
+          ecs-cli compose --file docker-compose.yml --project-name my-web-app up
+
+      - name: Deploy Frontend to ECS
+        run: |
+          ecs-cli configure --region us-east-1 --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --cluster WebCluster
+          ecs-cli compose --file docker-compose.yml --project-name my-web-app up
