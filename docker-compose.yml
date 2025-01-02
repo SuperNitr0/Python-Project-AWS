@@ -2,13 +2,15 @@ version: '3.8'
 
 services:
   backend:
-    image: <aws-account-id>.dkr.ecr.<your-region>.amazonaws.com/my-web-app/backend:latest
+    build:
+      context: ./backend
     container_name: backend
     ports:
       - "5000:5000"
-
+  
   frontend:
-    image: <aws-account-id>.dkr.ecr.<your-region>.amazonaws.com/my-web-app/frontend:latest
+    build:
+      context: ./frontend
     container_name: frontend
     ports:
       - "80:80"
