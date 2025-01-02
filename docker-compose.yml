@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    image: myregistry/backend:latest
+    container_name: backend
+    ports:
+      - "5000:5000"
+
+  frontend:
+    image: myregistry/frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
