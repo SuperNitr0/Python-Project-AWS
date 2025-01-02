@@ -1,19 +1,12 @@
-FROM node:16 AS build
+FROM node:16-slim
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
-
+COPY package.json .
 RUN npm install
 
-COPY frontend/ .
-
-RUN npm run build
-
-FROM nginx:alpine
-
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY . .
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "build"]
