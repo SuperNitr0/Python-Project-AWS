@@ -95,10 +95,34 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Update ECS Service with Backend Image
+      - name: Register New Task Definition for Backend
         run: |
-          aws ecs update-service --cluster WebCluster --service backend-service --force-new-deployment --image ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest
+          aws ecs register-task-definition \
+            --family my-web-app-backend \
+            --container-definitions "[{
+              \"name\": \"backend-container\",
+              \"image\": \"${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:backend-latest\",
+              \"memory\": 512,
+              \"cpu\": 256,
+              \"essential\": true
+            }]"
 
-      - name: Update ECS Service with Frontend Image
+      - name: Register New Task Definition for Frontend
         run: |
-          aws ecs update-service --cluster WebCluster --service frontend-service --force-new-deployment --image ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest
+          aws ecs register-task-definition \
+            --family my-web-app-frontend \
+            --container-definitions "[{
+              \"name\": \"frontend-container\",
+              \"image\": \"${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/my-web-app:frontend-latest\",
+              \"memory\": 512,
+              \"cpu\": 256,
+              \"essential\": true
+            }]"
+
+      - name: Update ECS Service with Backend Task Definition
+        run: |
+          aws ecs update-service --cluster WebCluster --service backend-service --task-definition my-web-app-backend --force-new-deployment
+
+      - name: Update ECS Service with Frontend Task Definition
+        run: |
+          aws ecs update-service --cluster WebCluster --service frontend-service --task-definition my-web-app-frontend --force-new-deployment
