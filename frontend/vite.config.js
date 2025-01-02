@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  root: './frontend',  // Make sure this points to the correct root folder
+  root: './frontend',  // Ensure this is pointing to the correct directory
   build: {
-    outDir: '../dist',  // Output folder for the build
+    outDir: 'dist',     // Output directory for the build
   },
 });
