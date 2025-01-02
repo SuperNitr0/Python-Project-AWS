@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-backend:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
           docker build -t my-web-app-backend ./backend
 
   build-frontend:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -61,7 +61,7 @@ jobs:
 
   push-docker-images:
     needs: [build-backend, build-frontend]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -86,7 +86,7 @@ jobs:
 
   deploy-to-ecs:
     needs: push-docker-images
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
